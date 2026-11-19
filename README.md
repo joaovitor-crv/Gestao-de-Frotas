@@ -10,7 +10,7 @@ Página única com os três painéis em abas:
 | Excesso de Velocidade | https://joaovitor-crv.github.io/Excesso-de-velocidade/ |
 | Fadiga e Rastreador | `fadiga.html` neste repositório, lendo a planilha PENDÊNCIAS LIBERTY do Google Planilhas |
 
-**Link:** https://joaovitor-crv.github.io/paineis-consumo/
+**Link:** https://joaovitor-crv.github.io/Gestao-de-Frotas/
 
 Cada aba abre a página publicada do repositório de cada painel. Por isso o seletor de semanas, o botão **Gerar PDF** e as metas são os mesmos da página original, e uma semana nova publicada em um desses repositórios aparece aqui automaticamente, sem mexer neste repositório.
 
