@@ -102,7 +102,7 @@ td.d{white-space:nowrap;font-variant-numeric:tabular-nums}
     <div class="logo"><img src="logo-crv.png" alt="CRV Industrial — Açúcar, Etanol e Energia"></div>
     <div class="hdr">
       <div class="hdr-row"><h1>Acompanhamento pendências - fadiga e rastreador</h1>
-        <span class="hdr-acoes"><button type="button" class="btn sec" id="btn-atualizar" title="Lê a planilha de novo">Atualizar</button><button type="button" class="btn" id="btn-pdf" title="Salvar em PDF (A4 paisagem)">Gerar PDF</button><span class="periodo" id="periodo">CARREGANDO…</span></span></div>
+        <span class="hdr-acoes"><button type="button" class="btn sec" id="btn-atualizar" title="Lê a planilha agora">Atualizar</button><button type="button" class="btn" id="btn-pdf" title="Salvar em PDF (A4 paisagem)">Gerar PDF</button><span class="periodo" id="periodo">CARREGANDO…</span></span></div>
       <div class="kpis" id="kpis"></div>
     </div>
   </div>
@@ -143,7 +143,7 @@ td.d{white-space:nowrap;font-variant-numeric:tabular-nums}
   <div class="foot">
     <b>Fonte</b>
     <ul>
-      <li>Planilha <a href="https://docs.google.com/spreadsheets/d/1QyGq-CdVxlFdCtv21EsCbnYYiRcr6KQmvKkIJVB1soc/edit?gid=0#gid=0" target="_blank" rel="noopener">PENDÊNCIAS LIBERTY</a> (Google Planilhas), lida ao abrir a página e de novo a cada 5 minutos. O que for alterado na planilha aparece aqui sem precisar publicar nada.</li>
+      <li>Planilha <a href="https://docs.google.com/spreadsheets/d/1QyGq-CdVxlFdCtv21EsCbnYYiRcr6KQmvKkIJVB1soc/edit?gid=0#gid=0" target="_blank" rel="noopener">PENDÊNCIAS LIBERTY</a> (Google Planilhas), lida automaticamente às 09:00 e às 15:00, de segunda a sábado (o horário da leitura aparece na faixa preta do topo). O botão <b>Atualizar</b> lê a planilha na hora.</li>
       <li>Entram as linhas com número de frota preenchido. "Aguardando material" = a palavra aparece em Responsável pela O.S ou em Feedback.</li>
     </ul>
   </div>
@@ -154,6 +154,8 @@ td.d{white-space:nowrap;font-variant-numeric:tabular-nums}
 {
 const PLANILHA='1QyGq-CdVxlFdCtv21EsCbnYYiRcr6KQmvKkIJVB1soc', GID='0';
 const URL_CSV=`https://docs.google.com/spreadsheets/d/${PLANILHA}/gviz/tq?tqx=out:csv&gid=${GID}`;
+/* cópia lida às 09:00 e às 15:00 (seg a sáb) pelo GitHub Actions (.github/workflows/ler-planilha-fadiga.yml) */
+const COPIA='https://raw.githubusercontent.com/joaovitor-crv/paineis-consumo/main/dados/';
 const COR={FADIGA:'#22378c',RASTREADOR:'#f08a24'};
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const norm=s=>String(s??'').normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().replace(/\s+/g,' ').trim();
@@ -235,31 +237,51 @@ document.getElementById('thead').addEventListener('click',e=>{const th=e.target.
 document.getElementById('filtros').addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;filtro=b.dataset.f;document.querySelectorAll('.chip').forEach(c=>c.setAttribute('aria-pressed',c===b));tabela()});
 document.getElementById('busca').addEventListener('input',tabela);
 
-async function carregar(){
-  const btn=document.getElementById('btn-atualizar');btn.disabled=true;btn.textContent='Atualizando…';
-  try{
-    const r=await fetch(URL_CSV+'&_='+Date.now(),{cache:'no-store'});
-    if(!r.ok)throw new Error('HTTP '+r.status);
-    const t=await r.text();
-    if(/^\s*</.test(t))throw new Error('a planilha não está aberta para leitura (compartilhamento "qualquer pessoa com o link")');
-    DADOS=ler(csv(t));
-    kpis(DADOS);
-    empilhado('c-veic',DADOS,r=>r.tipo);
-    empilhado('c-obs',DADOS,r=>r.obs);
-    empilhado('c-ret',DADOS,r=>r.retorno);
-    dias(DADOS);tabela();
-    document.getElementById('msg').innerHTML='';document.getElementById('conteudo').hidden=false;
-    const d=new Date();document.getElementById('periodo').textContent='ATUALIZADO '+d.toLocaleDateString('pt-BR')+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-  }catch(e){
-    document.getElementById('msg').innerHTML=`<div class="erro">Não foi possível ler a planilha de pendências (${esc(e.message)}). Confira a internet e o compartilhamento da planilha e clique em <b>Atualizar</b>.</div>`;
-    if(!DADOS.length)document.getElementById('periodo').textContent='SEM DADOS';
-  }finally{btn.disabled=false;btn.textContent='Atualizar'}
+const fmt=d=>d.toLocaleDateString('pt-BR')+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+let mostrado=0; /* horário dos dados na tela (ms) */
+function mostrar(texto,quando,rotulo){
+  DADOS=ler(csv(texto));
+  kpis(DADOS);
+  empilhado('c-veic',DADOS,r=>r.tipo);
+  empilhado('c-obs',DADOS,r=>r.obs);
+  empilhado('c-ret',DADOS,r=>r.retorno);
+  dias(DADOS);tabela();
+  document.getElementById('msg').innerHTML='';document.getElementById('conteudo').hidden=false;
+  document.getElementById('periodo').textContent=rotulo+' '+fmt(quando);
+  mostrado=quando.getTime();
 }
-document.getElementById('btn-atualizar').addEventListener('click',carregar);
+function erro(txt){
+  document.getElementById('msg').innerHTML=`<div class="erro">${txt}</div>`;
+  if(!DADOS.length)document.getElementById('periodo').textContent='SEM DADOS';
+}
+async function baixar(url){
+  const r=await fetch(url,{cache:'no-store'});
+  if(!r.ok)throw new Error('HTTP '+r.status);
+  const t=await r.text();
+  if(/^\s*</.test(t))throw new Error('a planilha não está aberta para leitura (compartilhamento "qualquer pessoa com o link")');
+  return t;
+}
+/* cópia agendada (09:00 e 15:00, seg a sáb) */
+async function carregarCopia(){
+  const q='?t='+Date.now();
+  const info=JSON.parse(await baixar(COPIA+'atualizado.json'+q));
+  const quando=new Date(info.em);
+  if(quando.getTime()<=mostrado)return;
+  mostrar(await baixar(COPIA+'fadiga.csv'+q),quando,'DADOS DE');
+}
+/* botão Atualizar: lê a planilha agora */
+async function lerAgora(){
+  const btn=document.getElementById('btn-atualizar');btn.disabled=true;btn.textContent='Atualizando…';
+  try{mostrar(await baixar(URL_CSV+'&_='+Date.now()),new Date(),'ATUALIZADO');}
+  catch(e){erro(`Não foi possível ler a planilha agora (${esc(e.message)}).`+(DADOS.length?' Os dados na tela continuam os da última leitura.':''))}
+  finally{btn.disabled=false;btn.textContent='Atualizar'}
+}
+document.getElementById('btn-atualizar').addEventListener('click',lerAgora);
 document.getElementById('btn-pdf').addEventListener('click',()=>{const t0=document.title;document.title='Pendencias Fadiga e Rastreador CRV - '+new Date().toLocaleDateString('pt-BR').replace(/\//g,'-');
   try{window.print()}catch(e){}finally{setTimeout(()=>{document.title=t0},1000)}});
-carregar();
-setInterval(carregar,5*60*1000);
+carregarCopia().catch(()=>lerAgora());
+/* com a página aberta, confere a cada 10 min se saiu a leitura das 09:00 ou das 15:00 */
+setInterval(()=>carregarCopia().catch(()=>{}),10*60*1000);
 }
 </script>
 </body>

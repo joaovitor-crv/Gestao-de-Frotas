@@ -1,0 +1,47 @@
+# Lê a planilha PENDÊNCIAS LIBERTY (fadiga e rastreador) às 09:00 e às 15:00 (horário de Brasília),
+# de segunda a sábado, e guarda a cópia em dados/fadiga.csv para a aba "Fadiga e Rastreador".
+# Também pode ser rodado à mão em Actions > "Ler planilha de fadiga e rastreador" > Run workflow.
+name: Ler planilha de fadiga e rastreador
+
+on:
+  schedule:
+    - cron: '0 12 * * 1-6'   # 09:00 em Brasília (UTC-3)
+    - cron: '0 18 * * 1-6'   # 15:00 em Brasília (UTC-3)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ler-planilha-fadiga
+  cancel-in-progress: false
+
+jobs:
+  ler:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Baixar a planilha
+        run: |
+          set -euo pipefail
+          URL="https://docs.google.com/spreadsheets/d/1QyGq-CdVxlFdCtv21EsCbnYYiRcr6KQmvKkIJVB1soc/gviz/tq?tqx=out:csv&gid=0"
+          curl -sSfL --retry 3 --retry-delay 20 "$URL" -o /tmp/fadiga.csv
+          if head -c 300 /tmp/fadiga.csv | grep -qi '<html'; then
+            echo "::error::A planilha não está aberta para leitura (compartilhar como 'qualquer pessoa com o link')."
+            exit 1
+          fi
+          mkdir -p dados
+          mv /tmp/fadiga.csv dados/fadiga.csv
+          ORIGEM=$([ "${{ github.event_name }}" = "schedule" ] && echo "agendado" || echo "manual")
+          echo "{\"em\":\"$(TZ=America/Sao_Paulo date +%Y-%m-%dT%H:%M:%S%:z)\",\"origem\":\"$ORIGEM\"}" > dados/atualizado.json
+
+      - name: Salvar a cópia
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add dados/fadiga.csv dados/atualizado.json
+          git commit -m "Leitura da planilha de fadiga e rastreador: $(TZ=America/Sao_Paulo date '+%d/%m/%Y %H:%M')"
+          git pull --rebase
+          git push
