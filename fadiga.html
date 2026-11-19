@@ -155,7 +155,12 @@ td.d{white-space:nowrap;font-variant-numeric:tabular-nums}
 const PLANILHA='1QyGq-CdVxlFdCtv21EsCbnYYiRcr6KQmvKkIJVB1soc', GID='0';
 const URL_CSV=`https://docs.google.com/spreadsheets/d/${PLANILHA}/gviz/tq?tqx=out:csv&gid=${GID}`;
 /* cópia lida às 09:00 e às 15:00 (seg a sáb) pelo GitHub Actions (.github/workflows/ler-planilha-fadiga.yml) */
-const COPIA='https://raw.githubusercontent.com/joaovitor-crv/paineis-consumo/main/dados/';
+/* repositório tirado do próprio endereço, para continuar funcionando se o repositório for renomeado:
+   dono.github.io/repositorio/... ou dono.github.io/... (site principal = repositório dono.github.io) */
+const COPIA=(()=>{const h=location.hostname,seg=location.pathname.split('/')[1]||'';
+  if(!h.endsWith('.github.io'))return 'https://raw.githubusercontent.com/joaovitor-crv/paineis-consumo/main/dados/';
+  const dono=h.split('.')[0],repo=seg&&!seg.includes('.')?seg:h;
+  return `https://raw.githubusercontent.com/${dono}/${repo}/main/dados/`})();
 const COR={FADIGA:'#22378c',RASTREADOR:'#f08a24'};
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const norm=s=>String(s??'').normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().replace(/\s+/g,' ').trim();
