@@ -58,7 +58,6 @@ iframe.on{display:block}
     <a href="#caminhoes" role="tab" id="t-caminhoes" aria-selected="false"><b>Caminhões</b></a>
     <a href="#velocidade" role="tab" id="t-velocidade" aria-selected="false"><b>Velocidade</b></a>
     <a href="#fadiga" role="tab" id="t-fadiga" aria-selected="false"><b>Fadiga e Rastreador</b></a>
-    <a href="#poeira" role="tab" id="t-poeira" aria-selected="false"><b>Poeira</b></a>
   </nav>
   <a class="out" id="out" href="#" target="_blank" rel="noopener">Nova janela ↗</a>
 </header>
@@ -69,11 +68,10 @@ iframe.on{display:block}
   <iframe id="f-caminhoes" title="Consumo Combustível Caminhões CRV" data-src="https://joaovitor-crv.github.io/Consumo-de-caminh-es/"></iframe>
   <iframe id="f-velocidade" title="Excessos de Velocidade CRV" data-src="https://joaovitor-crv.github.io/Excesso-de-velocidade/"></iframe>
   <iframe id="f-fadiga" title="Pendências Fadiga e Rastreador CRV" data-src="fadiga.html"></iframe>
-  <iframe id="f-poeira" title="Controle de Poeira" data-src="https://joaovitor-crv.github.io/registro-de-molhagem/"></iframe>
 </main>
 <script>
 {
-  const ids=['colhedoras','transbordos','caminhoes','velocidade','fadiga','poeira'];
+  const ids=['colhedoras','transbordos','caminhoes','velocidade','fadiga'];
   const loading=document.getElementById('loading');
   const show=()=>{
     let h=(location.hash||'').slice(1);
