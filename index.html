@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Painéis de Consumo CRV</title>
+<title>Painéis CRV</title>
 <style>
 /* Página única dos painéis: cada aba abre a página original do GitHub Pages.
    VOICE: sóbrio, de trabalho — uma porta de entrada, não um painel novo
@@ -45,11 +45,12 @@ iframe.on{display:block}
 </head>
 <body>
 <header>
-  <div class="brand"><b>Consumo de Combustível · CRV</b><span>Painéis de acompanhamento</span></div>
+  <div class="brand"><b>Painéis CRV</b><span>Consumo de combustível e pendências</span></div>
   <nav role="tablist" aria-label="Painéis">
     <a href="#colhedoras" role="tab" id="t-colhedoras" aria-selected="false"><b>Colhedoras</b></a>
     <a href="#transbordos" role="tab" id="t-transbordos" aria-selected="false"><b>Transbordos</b></a>
     <a href="#caminhoes" role="tab" id="t-caminhoes" aria-selected="false"><b>Caminhões</b></a>
+    <a href="#fadiga" role="tab" id="t-fadiga" aria-selected="false"><b>Fadiga e Rastreador</b></a>
   </nav>
   <a class="out" id="out" href="#" target="_blank" rel="noopener">Abrir em nova janela ↗</a>
 </header>
@@ -58,10 +59,11 @@ iframe.on{display:block}
   <iframe id="f-colhedoras" title="Consumo Combustível Colhedoras CRV" data-src="https://joaovitor-crv.github.io/Consumo-de-colhedora/"></iframe>
   <iframe id="f-transbordos" title="Consumo Combustível Transbordos CRV" data-src="https://joaovitor-crv.github.io/consumo-transbordo/"></iframe>
   <iframe id="f-caminhoes" title="Consumo Combustível Caminhões CRV" data-src="https://joaovitor-crv.github.io/Consumo-de-caminh-es/"></iframe>
+  <iframe id="f-fadiga" title="Pendências Fadiga e Rastreador CRV" data-src="fadiga.html"></iframe>
 </main>
 <script>
 {
-  const ids=['colhedoras','transbordos','caminhoes'];
+  const ids=['colhedoras','transbordos','caminhoes','fadiga'];
   const loading=document.getElementById('loading');
   const show=()=>{
     let h=(location.hash||'').slice(1);
